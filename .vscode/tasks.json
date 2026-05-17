@@ -2,7 +2,68 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "ESPHome: Validate gardener",
+      "label": "Gardener: Generate ESPHome config",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\deploy.ps1",
+        "-Action",
+        "generate"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Validate generated gardener",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\deploy.ps1",
+        "-Action",
+        "config"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Compile generated gardener",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\deploy.ps1",
+        "-Action",
+        "compile"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Upload generated gardener OTA",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\deploy.ps1",
+        "-Action",
+        "upload",
+        "-Device",
+        "192.168.42.141"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Validate original reference",
       "type": "shell",
       "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
       "args": [
@@ -12,73 +73,6 @@
         "${workspaceFolder}\\esp32-s3-gardener-01.yaml"
       ],
       "group": "test",
-      "problemMatcher": []
-    },
-    {
-      "label": "ESPHome: Validate gardener packaged",
-      "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "esphome",
-        "config",
-        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml"
-      ],
-      "group": "test",
-      "problemMatcher": []
-    },
-    {
-      "label": "ESPHome: Compile gardener",
-      "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "esphome",
-        "compile",
-        "${workspaceFolder}\\esp32-s3-gardener-01.yaml"
-      ],
-      "group": "build",
-      "problemMatcher": []
-    },
-    {
-      "label": "ESPHome: Compile gardener packaged",
-      "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "esphome",
-        "compile",
-        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml"
-      ],
-      "group": "build",
-      "problemMatcher": []
-    },
-    {
-      "label": "ESPHome: Upload gardener OTA",
-      "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "esphome",
-        "upload",
-        "${workspaceFolder}\\esp32-s3-gardener-01.yaml",
-        "--device",
-        "192.168.42.141"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "ESPHome: Upload gardener packaged OTA",
-      "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "esphome",
-        "upload",
-        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml",
-        "--device",
-        "192.168.42.141"
-      ],
       "problemMatcher": []
     },
     {

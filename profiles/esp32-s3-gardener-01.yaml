@@ -1,0 +1,43 @@
+# Minimal hardware profile for the current ESP32-S3 gardener controller.
+# Run tools/generate_config.py to produce the ESPHome YAML used for flashing.
+
+device:
+  name: esp32-s3-gardener-01
+  friendly_name: ESP32 S3 Gardener 01
+
+board:
+  package: boards/esp32-s3-octal-psram.yaml
+  flash_size: 8MB
+
+hardware:
+  beeper:
+    pin: GPIO1
+    inverted: true
+  leds:
+    pin: GPIO2
+    count: 9
+  button:
+    pin: GPIO11
+
+channels:
+  - sensor_pin: GPIO3
+    valve_pin: GPIO10
+  - sensor_pin: GPIO4
+    valve_pin: GPIO9
+  - sensor_pin: GPIO5
+    valve_pin: GPIO8
+  - sensor_pin: GPIO6
+    valve_pin: GPIO7
+
+defaults:
+  sensor_voltage_too_high: "3."
+  sensor_voltage_too_low: ".1"
+  sensor_pct_critical: "15"
+  main_led_brightness: "0.5"
+  sensor_led_brightness: "0.5"
+  dry_voltage: "2.23"
+  wet_voltage: "0.86"
+  breathing_min_brightness: "0.25"
+  breathing_cycle: "4000"
+  blink_cycle: "250"
+  slow_blink_cycle: "1000"

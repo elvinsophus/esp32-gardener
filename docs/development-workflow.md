@@ -30,11 +30,19 @@ The original reference config is:
 esp32-s3-gardener-01.yaml
 ```
 
-The package-based config for new development is:
+The profile for new development is:
 
 ```text
-esp32-s3-gardener-01.packaged.yaml
+profiles\esp32-s3-gardener-01.yaml
 ```
+
+The generated ESPHome config is:
+
+```text
+esp32-s3-gardener-01.generated.yaml
+```
+
+Do not edit the generated file directly. Regenerate it from the profile.
 
 The real secrets file is:
 
@@ -49,31 +57,19 @@ secrets.yaml
 Validate the config:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome config .\esp32-s3-gardener-01.yaml
-```
-
-Validate the package-based config:
-
-```powershell
-.\.venv\Scripts\python.exe -m esphome config .\esp32-s3-gardener-01.packaged.yaml
+.\tools\deploy.ps1 -Action config
 ```
 
 Compile firmware:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome compile .\esp32-s3-gardener-01.yaml
-```
-
-Compile the package-based firmware:
-
-```powershell
-.\.venv\Scripts\python.exe -m esphome compile .\esp32-s3-gardener-01.packaged.yaml
+.\tools\deploy.ps1 -Action compile
 ```
 
 Upload over OTA to the current device:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome upload .\esp32-s3-gardener-01.packaged.yaml --device 192.168.42.141
+.\tools\deploy.ps1 -Action upload -Device 192.168.42.141
 ```
 
 Start the local ESPHome dashboard:
@@ -92,12 +88,11 @@ http://localhost:6052
 
 Use `Terminal > Run Task...` for:
 
-- `ESPHome: Validate gardener`
-- `ESPHome: Validate gardener packaged`
-- `ESPHome: Compile gardener`
-- `ESPHome: Compile gardener packaged`
-- `ESPHome: Upload gardener OTA`
-- `ESPHome: Upload gardener packaged OTA`
+- `Gardener: Generate ESPHome config`
+- `ESPHome: Validate generated gardener`
+- `ESPHome: Compile generated gardener`
+- `ESPHome: Upload generated gardener OTA`
+- `ESPHome: Validate original reference`
 - `ESPHome: Dashboard`
 
 ## Verification Rules
@@ -124,8 +119,8 @@ http://192.168.42.141/
 
 ## Current Validation Notes
 
-Both the original config and the package-based config validate and compile
-locally with ESPHome `2026.4.5`.
+The generated config is intended to validate and compile locally with ESPHome
+`2026.4.5`.
 
 Known non-blocking warnings:
 

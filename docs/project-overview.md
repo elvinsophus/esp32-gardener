@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Gardener is an ESPHome-based irrigation controller. It connects a fixed-size
-bank of moisture sensors to a fixed-size bank of valves, then exposes telemetry,
+Gardener is an ESPHome-based irrigation controller. It connects a profiled bank
+of moisture sensors to a profiled bank of valves, then exposes telemetry,
 controls, and status indicators to Home Assistant.
 
 The current deployed device is working and should be treated as the reference
@@ -38,23 +38,18 @@ or one deployed device name. The long-term shape should separate:
 - Controller behavior: moisture thresholds, valve control, status display,
   beeper alerts, Home Assistant entities.
 
-The current YAML can remain as the first concrete device instance while shared
-behavior is extracted into reusable packages.
+The original YAML remains as the first concrete reference device while shared
+behavior is extracted into reusable packages. Channel count belongs to the
+device profile, not the shared controller package.
 
 ## Channel Count
 
-The hardware is organized around four-channel MOSFET modules. That means the
-natural expansion unit is four channels. The current ESP32 pin budget limits the
-active implementation to exactly four moisture sensors and four valves.
-
-The generic project should still describe channel count explicitly instead of
-burying it in pin names or LED indexes. Even if the first reusable version is
-limited to four channels, the config should make that constraint visible.
+The current hardware uses four moisture sensors and four valves. Future boards
+can describe a different channel count by changing the `channels:` list in their
+profile.
 
 ## Non-Goals For The First Generic Pass
 
-- Automatically generating arbitrary numbers of ESPHome entities.
 - Supporting boards that cannot provide the required ADC and GPIO pins.
 - Changing the behavior of the already working `esp32-s3-gardener-01` device.
 - Uploading firmware before validation and compile checks pass locally.
-

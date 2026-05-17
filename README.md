@@ -46,33 +46,34 @@ The original Home Assistant export is kept as the reference config:
 esp32-s3-gardener-01.yaml
 ```
 
-The generic/package-based version is:
+The generic version is generated from the device profile:
 
 ```text
-esp32-s3-gardener-01.packaged.yaml
+profiles/esp32-s3-gardener-01.yaml
+esp32-s3-gardener-01.generated.yaml
 ```
 
-Use the packaged config for new work unless you are comparing against the
-original reference.
+Edit the profile for board-specific values. The generated YAML is a local build
+artifact used by ESPHome and is ignored by git.
 
 ## Useful commands
 
 Validate a config:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome config .\esp32-s3-gardener-01.packaged.yaml
+.\tools\deploy.ps1 -Action config
 ```
 
 Compile firmware:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome compile .\esp32-s3-gardener-01.packaged.yaml
+.\tools\deploy.ps1 -Action compile
 ```
 
 Upload over OTA:
 
 ```powershell
-.\.venv\Scripts\python.exe -m esphome upload .\esp32-s3-gardener-01.packaged.yaml --device 192.168.42.141
+.\tools\deploy.ps1 -Action upload -Device 192.168.42.141
 ```
 
 Open the local ESPHome dashboard:

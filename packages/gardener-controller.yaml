@@ -1,0 +1,448 @@
+# Generic gardener controller package.
+#
+# Device-specific identity, pins, LED count, and defaults are supplied by the
+# top-level device YAML through substitutions.
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2025.11.0
+  name_add_mac_suffix: false
+  on_boot:
+    priority: -10
+    then:
+      - light.turn_on:
+          id: status_leds
+          brightness: 100%
+          effect: "Status Display"
+      - script.execute: beep_startup_ok
+      - delay: 10s
+      - globals.set:
+          id: startup_complete
+          value: "true"
+
+# ---------- Core services ----------
+logger:
+
+api:
+
+ota:
+  - platform: esphome
+
+captive_portal:
+
+web_server:
+
+# ---------- Internal state ----------
+globals:
+  - id: startup_complete
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+# ---------- Physical outputs ----------
+output:
+  - platform: gpio
+    id: beeper_out
+    pin:
+      number: ${pin_beeper}
+      inverted: ${beeper_inverted}
+
+# ---------- User-tunable settings ----------
+number:
+  - platform: template
+    id: moisture_dry_voltage
+    name: "Moisture - Dry Voltage"
+    min_value: 1.8
+    max_value: 3.3
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    initial_value: ${dry_voltage_default}
+
+  - platform: template
+    id: moisture_wet_voltage
+    name: "Moisture - Wet Voltage"
+    min_value: 0.0
+    max_value: 1.5
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    initial_value: ${wet_voltage_default}
+
+  - platform: template
+    id: moisture_fault_low_voltage
+    name: "Moisture - Fault Low Voltage"
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    initial_value: ${sensor_voltage_too_low}
+
+  - platform: template
+    id: moisture_fault_high_voltage
+    name: "Moisture - Fault High Voltage"
+    min_value: 2.0
+    max_value: 3.3
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    initial_value: ${sensor_voltage_too_high}
+
+  - platform: template
+    id: moisture_critical_percent
+    name: "Moisture - Critical Percent"
+    min_value: 0
+    max_value: 50
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: ${sensor_pct_critical}
+
+  - platform: template
+    id: main_led_brightness
+    name: "LED - Main Brightness"
+    min_value: 0.05
+    max_value: 1.0
+    step: 0.05
+    optimistic: true
+    restore_value: true
+    initial_value: ${main_led_brightness_default}
+
+  - platform: template
+    id: sensor_led_brightness
+    name: "LED - Channel Brightness"
+    min_value: 0.05
+    max_value: 1.0
+    step: 0.05
+    optimistic: true
+    restore_value: true
+    initial_value: ${sensor_led_brightness_default}
+
+  - platform: template
+    id: breathing_min_brightness
+    name: "LED - Breathing Minimum"
+    min_value: 0.0
+    max_value: 0.8
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    initial_value: ${breathing_min_brightness_default}
+
+  - platform: template
+    id: breathing_cycle
+    name: "LED - Breathing Cycle"
+    min_value: 500
+    max_value: 10000
+    step: 100
+    optimistic: true
+    restore_value: true
+    initial_value: ${breathing_cycle_default}
+
+  - platform: template
+    id: blink_cycle
+    name: "LED - Blink Cycle"
+    min_value: 50
+    max_value: 1000
+    step: 50
+    optimistic: true
+    restore_value: true
+    initial_value: ${blink_cycle_default}
+
+  - platform: template
+    id: slow_blink_cycle
+    name: "LED - Slow Blink Cycle"
+    min_value: 100
+    max_value: 5000
+    step: 100
+    optimistic: true
+    restore_value: true
+    initial_value: ${slow_blink_cycle_default}
+
+# ---------- Control switches ----------
+switch:
+  - platform: template
+    id: board_led_show_sensor_status
+    name: "Status LED - Show Moisture Alerts"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: template
+    id: board_led_show_valve_status
+    name: "Status LED - Show Valve Activity"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: template
+    id: beeper_enabled
+    name: "Beeper - Enabled"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: template
+    id: beeper_night_mute
+    name: "Beeper - Night Mute"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---------- Binary sensors ----------
+binary_sensor:
+  - platform: gpio
+    id: node_button
+    name: "Board - Button"
+    pin:
+      number: ${pin_button}
+      mode: INPUT_PULLUP
+      inverted: true
+
+# ---------- Sensors ----------
+sensor:
+  - platform: wifi_signal
+    id: wifi_rssi
+    name: "Network - WiFi Signal"
+    update_interval: 30s
+
+# ---------- Status LEDs ----------
+light:
+  - platform: esp32_rmt_led_strip
+    id: status_leds
+    name: "Status LED - Strip"
+    pin: ${pin_leds}
+    num_leds: ${led_count}
+    chipset: WS2812
+    rgb_order: GRB
+    effects:
+      - addressable_lambda:
+          name: "Status Display"
+          update_interval: 50ms
+          lambda: |-
+            constexpr int BOARD_LED_IDX = 0;
+            constexpr int SENSOR_LED_IDX_START = 1;
+            constexpr int SENSOR_LED_IDX_STEP = 2;
+            constexpr int VALVE_LED_IDX_START = 2;
+            constexpr int VALVE_LED_IDX_STEP = 2;
+            constexpr int CHANNEL_COUNT = ${channel_count};
+
+            const Color COLOR_OFF = Color(0, 0, 0);
+            const Color COLOR_BOARD_OK = Color(80, 120, 255);
+            const Color COLOR_SENSOR_FAULT = Color(180, 0, 255);
+            const Color COLOR_STARTING = Color(90, 220, 110);
+            const Color COLOR_VALVE_ACTIVE = Color(70, 180, 220);
+            const Color COLOR_WET = Color(80, 120, 255);
+            const Color COLOR_DAMP = Color(70, 180, 220);
+            const Color COLOR_OK = Color(90, 220, 110);
+            const Color COLOR_WARN = Color(200, 230, 80);
+            const Color COLOR_DRY = Color(255, 150, 50);
+            const Color COLOR_DRY_ALERT = Color(230, 70, 30);
+            const Color COLOR_CRITICAL = Color(180, 20, 30);
+
+            const float fault_low_v = id(moisture_fault_low_voltage).state;
+            const float fault_high_v = id(moisture_fault_high_voltage).state;
+            const float dry_v = id(moisture_dry_voltage).state;
+            const float wet_v = id(moisture_wet_voltage).state;
+            const int critical_pct = (int) id(moisture_critical_percent).state;
+            const float breathing_min = id(breathing_min_brightness).state;
+            const int breathing_ms = (int) id(breathing_cycle).state;
+            const int blink_ms = (int) id(blink_cycle).state;
+            const int slow_blink_ms = (int) id(slow_blink_cycle).state;
+
+            const uint32_t now = millis();
+            const float breathe = breathing_min + (1 - breathing_min) * ((sin(now * 3.1416 / breathing_ms) + 1.0) / 2.0);
+            const bool blink = (now / blink_ms) % 2 == 0;
+            const bool slow_blink = (now / slow_blink_ms) % 2 == 0;
+
+            auto scale = [](Color c, float b) -> Color {
+              return Color(c.r * b, c.g * b, c.b * b);
+            };
+
+            auto moisture_pct = [&](float v) -> float {
+              float pct = (dry_v - v) / (dry_v - wet_v) * 100.0;
+              if (pct < 0) pct = 0;
+              if (pct > 100) pct = 100;
+              return pct;
+            };
+
+            auto moisture_color = [&](float pct, int &abnormal) -> Color {
+              abnormal = 0;
+              if (pct >= 90) return COLOR_WET;
+              if (pct >= 75) return COLOR_DAMP;
+              if (pct >= 60) return COLOR_OK;
+              if (pct >= 45) return COLOR_WARN;
+              if (pct >= 30) return COLOR_DRY;
+              if (pct >= critical_pct) {
+                abnormal = 1;
+                return COLOR_DRY_ALERT;
+              }
+              abnormal = 2;
+              return COLOR_CRITICAL;
+            };
+
+            const float sensor_values[CHANNEL_COUNT] = { ${sensor_value_reads} };
+            const bool valve_values[CHANNEL_COUNT] = { ${valve_state_reads} };
+
+            bool sensor_fault = false;
+            bool critical_dry = false;
+            const float sensor_b = id(sensor_led_brightness).state;
+
+            for (int i = 0; i < CHANNEL_COUNT; i++) {
+              const float v = sensor_values[i];
+              const int led_idx = SENSOR_LED_IDX_START + SENSOR_LED_IDX_STEP * i;
+
+              if (isnan(v) || v < fault_low_v || v > fault_high_v) {
+                it[led_idx] = blink ? scale(COLOR_SENSOR_FAULT, sensor_b) : COLOR_OFF;
+                sensor_fault = true;
+                continue;
+              }
+
+              int abnormal = 0;
+              const float pct = moisture_pct(v);
+              const Color c = moisture_color(pct, abnormal);
+
+              if (abnormal) {
+                it[led_idx] = slow_blink ? scale(c, sensor_b) : COLOR_OFF;
+                if (abnormal >= 2) critical_dry = true;
+              } else {
+                it[led_idx] = scale(c, breathe * sensor_b);
+              }
+            }
+
+            bool valve_active = false;
+            for (int i = 0; i < CHANNEL_COUNT; i++) {
+              const int led_idx = VALVE_LED_IDX_START + VALVE_LED_IDX_STEP * i;
+              if (valve_values[i]) {
+                it[led_idx] = scale(COLOR_VALVE_ACTIVE, breathe * sensor_b);
+                valve_active = true;
+              } else {
+                it[led_idx] = COLOR_OFF;
+              }
+            }
+
+            const bool wifi_ok = id(wifi_rssi).has_state();
+            const float board_b = id(main_led_brightness).state;
+            Color board_led_color = COLOR_OFF;
+            bool has_board_led_color = false;
+
+            if (id(board_led_show_sensor_status).state) {
+              if (critical_dry) {
+                board_led_color = blink ? scale(COLOR_CRITICAL, board_b) : COLOR_OFF;
+                has_board_led_color = true;
+              } else if (sensor_fault) {
+                board_led_color = blink ? scale(COLOR_SENSOR_FAULT, board_b) : COLOR_OFF;
+                has_board_led_color = true;
+              }
+            }
+
+            if (!has_board_led_color && id(board_led_show_valve_status).state && valve_active) {
+              board_led_color = scale(COLOR_VALVE_ACTIVE, breathe * board_b);
+              has_board_led_color = true;
+            }
+
+            if (!has_board_led_color && !wifi_ok) {
+              board_led_color = blink
+                ? scale(id(startup_complete) ? COLOR_SENSOR_FAULT : COLOR_STARTING, board_b)
+                : COLOR_OFF;
+              has_board_led_color = true;
+            }
+
+            if (!has_board_led_color) {
+              board_led_color = scale(COLOR_BOARD_OK, breathe * board_b);
+            }
+            it[BOARD_LED_IDX] = board_led_color;
+
+# ---------- Beeper scripts ----------
+script:
+  - id: beep_short
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 80ms
+      - output.turn_off: beeper_out
+
+  - id: beep_startup_ok
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 50ms
+      - output.turn_off: beeper_out
+      - delay: 80ms
+      - output.turn_on: beeper_out
+      - delay: 80ms
+      - output.turn_off: beeper_out
+
+  - id: beep_wifi_failure
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 80ms
+      - output.turn_off: beeper_out
+      - delay: 120ms
+      - output.turn_on: beeper_out
+      - delay: 80ms
+      - output.turn_off: beeper_out
+      - delay: 120ms
+      - output.turn_on: beeper_out
+      - delay: 80ms
+      - output.turn_off: beeper_out
+      - delay: 120ms
+
+  - id: beep_dry_warning
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 140ms
+      - output.turn_off: beeper_out
+      - delay: 200ms
+      - output.turn_on: beeper_out
+      - delay: 140ms
+      - output.turn_off: beeper_out
+
+  - id: beep_critical
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 800ms
+      - output.turn_off: beeper_out
+      - delay: 200ms
+      - output.turn_on: beeper_out
+      - delay: 800ms
+      - output.turn_off: beeper_out
+
+# ---------- Periodic alerts ----------
+interval:
+  - interval: 3s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(startup_complete) && id(beeper_enabled).state && !id(wifi_rssi).has_state();
+          then:
+            - script.execute: beep_wifi_failure
+
+  - interval: 1min
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(beeper_enabled).state) return false;
+              if (!id(startup_complete)) return false;
+
+              const float fault_low_v = id(moisture_fault_low_voltage).state;
+              const float fault_high_v = id(moisture_fault_high_voltage).state;
+              const float dry_v = id(moisture_dry_voltage).state;
+              const float wet_v = id(moisture_wet_voltage).state;
+              const int critical_pct = (int) id(moisture_critical_percent).state;
+              constexpr int CHANNEL_COUNT = ${channel_count};
+              const float values[CHANNEL_COUNT] = { ${sensor_value_reads} };
+
+              for (int i = 0; i < CHANNEL_COUNT; i++) {
+                const float v = values[i];
+                if (isnan(v) || v < fault_low_v || v > fault_high_v) continue;
+
+                const float pct = (dry_v - v) / (dry_v - wet_v) * 100.0;
+                if (pct < critical_pct) return true;
+              }
+
+              return false;
+          then:
+            - script.execute: beep_dry_warning
