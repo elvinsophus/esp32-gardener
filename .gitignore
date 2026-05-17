@@ -1,0 +1,10 @@
+.esphome/
+.venv/
+__pycache__/
+*.pyc
+*.bin
+*.elf
+*.map
+secrets.yaml
+esp32-s3-gardener-01.yaml
+esp32-s3-gardener-01.packaged.yaml

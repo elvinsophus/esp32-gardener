@@ -1,0 +1,18 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "esphome.validator": "local",
+  "files.associations": {
+    "esp32-s3-gardener-01.yaml": "esphome",
+    "esp32-s3-gardener-01.packaged.yaml": "esphome",
+    "*.yaml": "yaml",
+    "*.yml": "yaml"
+  },
+  "yaml.customTags": [
+    "!secret scalar",
+    "!include scalar",
+    "!lambda scalar",
+    "!extend scalar",
+    "!remove scalar"
+  ],
+  "yaml.validate": true
+}

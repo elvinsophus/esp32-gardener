@@ -1,0 +1,98 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ESPHome: Validate gardener",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "config",
+        "${workspaceFolder}\\esp32-s3-gardener-01.yaml"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Validate gardener packaged",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "config",
+        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Compile gardener",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "compile",
+        "${workspaceFolder}\\esp32-s3-gardener-01.yaml"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Compile gardener packaged",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "compile",
+        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Upload gardener OTA",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "upload",
+        "${workspaceFolder}\\esp32-s3-gardener-01.yaml",
+        "--device",
+        "192.168.42.141"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Upload gardener packaged OTA",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "upload",
+        "${workspaceFolder}\\esp32-s3-gardener-01.packaged.yaml",
+        "--device",
+        "192.168.42.141"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ESPHome: Dashboard",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "esphome",
+        "dashboard",
+        "${workspaceFolder}"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
