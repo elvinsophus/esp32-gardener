@@ -46,6 +46,7 @@ if (-not (Test-Python $ProjectPython)) {
 
 $EspHomeArgs = @("-m", "esphome", $Action, $Generated)
 if ($Action -eq "upload") {
+    & $ProjectPython -m esphome compile $Generated
     $EspHomeArgs += @("--device", $Device)
 }
 

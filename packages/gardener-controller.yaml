@@ -196,6 +196,50 @@ binary_sensor:
       mode: INPUT_PULLUP
       inverted: true
 
+# ---------- Preview buttons ----------
+button:
+  - platform: template
+    id: preview_beep_ack
+    name: "Beeper Preview - Acknowledge (single short tap)"
+    on_press:
+      - script.execute: beep_ack
+
+  - platform: template
+    id: preview_beep_startup_ok
+    name: "Beeper Preview - Startup OK (short then long)"
+    on_press:
+      - script.execute: beep_startup_ok
+
+  - platform: template
+    id: preview_beep_valve_activity
+    name: "Beeper Preview - Valve Activity (two quick taps)"
+    on_press:
+      - script.execute: beep_valve_activity
+
+  - platform: template
+    id: preview_beep_sensor_fault
+    name: "Beeper Preview - Sensor Fault (four fast taps)"
+    on_press:
+      - script.execute: beep_sensor_fault
+
+  - platform: template
+    id: preview_beep_wifi_problem
+    name: "Beeper Preview - WiFi Problem (three medium taps)"
+    on_press:
+      - script.execute: beep_wifi_problem
+
+  - platform: template
+    id: preview_beep_dry_warning
+    name: "Beeper Preview - Dry Warning (two slow taps)"
+    on_press:
+      - script.execute: beep_dry_warning
+
+  - platform: template
+    id: preview_beep_critical_dry
+    name: "Beeper Preview - Critical Dry (long short long)"
+    on_press:
+      - script.execute: beep_critical_dry
+
 # ---------- Sensors ----------
 sensor:
   - platform: wifi_signal
@@ -352,72 +396,105 @@ light:
 
 # ---------- Beeper scripts ----------
 script:
-  - id: beep_short
+  - id: beep_ack
     mode: restart
     then:
       - output.turn_on: beeper_out
-      - delay: 80ms
+      - delay: 60ms
       - output.turn_off: beeper_out
 
   - id: beep_startup_ok
     mode: restart
     then:
       - output.turn_on: beeper_out
-      - delay: 50ms
+      - delay: 70ms
       - output.turn_off: beeper_out
-      - delay: 80ms
+      - delay: 90ms
       - output.turn_on: beeper_out
-      - delay: 80ms
+      - delay: 140ms
       - output.turn_off: beeper_out
 
-  - id: beep_wifi_failure
+  - id: beep_valve_activity
     mode: restart
     then:
       - output.turn_on: beeper_out
-      - delay: 80ms
+      - delay: 70ms
       - output.turn_off: beeper_out
-      - delay: 120ms
+      - delay: 70ms
       - output.turn_on: beeper_out
-      - delay: 80ms
+      - delay: 70ms
       - output.turn_off: beeper_out
-      - delay: 120ms
+
+  - id: beep_sensor_fault
+    mode: restart
+    then:
       - output.turn_on: beeper_out
-      - delay: 80ms
+      - delay: 50ms
       - output.turn_off: beeper_out
-      - delay: 120ms
+      - delay: 70ms
+      - output.turn_on: beeper_out
+      - delay: 50ms
+      - output.turn_off: beeper_out
+      - delay: 70ms
+      - output.turn_on: beeper_out
+      - delay: 50ms
+      - output.turn_off: beeper_out
+      - delay: 70ms
+      - output.turn_on: beeper_out
+      - delay: 50ms
+      - output.turn_off: beeper_out
+
+  - id: beep_wifi_problem
+    mode: restart
+    then:
+      - output.turn_on: beeper_out
+      - delay: 90ms
+      - output.turn_off: beeper_out
+      - delay: 130ms
+      - output.turn_on: beeper_out
+      - delay: 90ms
+      - output.turn_off: beeper_out
+      - delay: 130ms
+      - output.turn_on: beeper_out
+      - delay: 90ms
+      - output.turn_off: beeper_out
 
   - id: beep_dry_warning
     mode: restart
     then:
       - output.turn_on: beeper_out
-      - delay: 140ms
+      - delay: 180ms
       - output.turn_off: beeper_out
-      - delay: 200ms
+      - delay: 220ms
       - output.turn_on: beeper_out
-      - delay: 140ms
+      - delay: 180ms
       - output.turn_off: beeper_out
 
-  - id: beep_critical
+  - id: beep_critical_dry
     mode: restart
     then:
       - output.turn_on: beeper_out
-      - delay: 800ms
+      - delay: 650ms
       - output.turn_off: beeper_out
-      - delay: 200ms
+      - delay: 160ms
       - output.turn_on: beeper_out
-      - delay: 800ms
+      - delay: 120ms
+      - output.turn_off: beeper_out
+      - delay: 160ms
+      - output.turn_on: beeper_out
+      - delay: 650ms
       - output.turn_off: beeper_out
 
 # ---------- Periodic alerts ----------
 interval:
-  - interval: 3s
+  - interval: 10s
     then:
       - if:
           condition:
             lambda: |-
-              return id(startup_complete) && id(beeper_enabled).state && !id(wifi_rssi).has_state();
+              return id(startup_complete) && id(beeper_enabled).state && !id(beeper_night_mute).state && !id(wifi_rssi).has_state();
           then:
-            - script.execute: beep_wifi_failure
+            - script.execute: beep_wifi_problem
 
   - interval: 1min
     then:
@@ -425,6 +502,63 @@ interval:
           condition:
             lambda: |-
               if (!id(beeper_enabled).state) return false;
+              if (id(beeper_night_mute).state) return false;
+              if (!id(startup_complete)) return false;
+
+              const float fault_low_v = id(moisture_fault_low_voltage).state;
+              const float fault_high_v = id(moisture_fault_high_voltage).state;
+              const float dry_v = id(moisture_dry_voltage).state;
+              const float wet_v = id(moisture_wet_voltage).state;
+              const int critical_pct = (int) id(moisture_critical_percent).state;
+              constexpr int CHANNEL_COUNT = ${channel_count};
+              const float values[CHANNEL_COUNT] = { ${sensor_value_reads} };
+
+              for (int i = 0; i < CHANNEL_COUNT; i++) {
+                const float v = values[i];
+                if (isnan(v) || v < fault_low_v || v > fault_high_v) return true;
+              }
+
+              return false;
+          then:
+            - script.execute: beep_sensor_fault
+
+  - interval: 2min
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(beeper_enabled).state) return false;
+              if (id(beeper_night_mute).state) return false;
+              if (!id(startup_complete)) return false;
+
+              constexpr int DRY_WARNING_PCT = 30;
+              const float fault_low_v = id(moisture_fault_low_voltage).state;
+              const float fault_high_v = id(moisture_fault_high_voltage).state;
+              const float dry_v = id(moisture_dry_voltage).state;
+              const float wet_v = id(moisture_wet_voltage).state;
+              const int critical_pct = (int) id(moisture_critical_percent).state;
+              constexpr int CHANNEL_COUNT = ${channel_count};
+              const float values[CHANNEL_COUNT] = { ${sensor_value_reads} };
+
+              for (int i = 0; i < CHANNEL_COUNT; i++) {
+                const float v = values[i];
+                if (isnan(v) || v < fault_low_v || v > fault_high_v) continue;
+
+                const float pct = (dry_v - v) / (dry_v - wet_v) * 100.0;
+                if (pct >= critical_pct && pct < DRY_WARNING_PCT) return true;
+              }
+
+              return false;
+          then:
+            - script.execute: beep_dry_warning
+
+  - interval: 1min
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(beeper_enabled).state) return false;
+              if (id(beeper_night_mute).state) return false;
               if (!id(startup_complete)) return false;
 
               const float fault_low_v = id(moisture_fault_low_voltage).state;
@@ -445,4 +579,4 @@ interval:
 
               return false;
           then:
-            - script.execute: beep_dry_warning
+            - script.execute: beep_critical_dry

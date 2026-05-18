@@ -10,6 +10,7 @@ Start with these docs:
 - [Project Overview](docs/project-overview.md)
 - [Hardware Model](docs/hardware-model.md)
 - [Configuration Strategy](docs/configuration-strategy.md)
+- [Beeper Patterns](docs/beeper-patterns.md)
 - [Development Workflow](docs/development-workflow.md)
 
 ## Local setup
